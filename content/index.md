@@ -1,3 +1,1 @@
-# %siteName%
-
-Welcomes you!
+%stub-coresnippet%

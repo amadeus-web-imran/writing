@@ -1,7 +1,7 @@
 <?php
 define('SITEPATH', __DIR__);
-include_once '../amadeus8/entry.php';
+include_once '../dawn/entry.php';
 
-variables(['network-at' => ALLSITESROOT . '/amadeus8', 'network' => OURNETWORK]);
+DEFINE('SITENETWORK', OURNETWORK);
 
 runFrameworkFile('site');
