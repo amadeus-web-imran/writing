@@ -37,13 +37,13 @@ function __get_delta($sheet, $items) {
 			$files = scandir(SITEPATH . '/' . $wkType . '/' . ($wkType == 'prose' ? $work . '/' : '') . $coll);
 			$rb = $wkType . '	' . $work . '	' . $coll . '	';
 			foreach ($files as $f) {
-				if ($f[0] == '.' || endsWith($f, '.jpg') || $f == '_toc.tsv') continue;
-				$f = str_replace('.txt', '', $f);
+				if ($f[0] == '.' || endsWith($f, '.md') || endsWith($f, '.jpg') || $f == '_toc.tsv') continue;
+				$f = replaceItems($f, ['.txt' => '']); //md is reserved for deep dives
 				if (isset($pieces[$f])) {
 					unset($pieces[$f]);
 					$matches[] = $rb . $f;
 				} else {
-					$missing[] = $rb . $f;
+					$missing[] = $rb . humanize($f); //so it can be copied into the excel
 				}
 			}
 		}
