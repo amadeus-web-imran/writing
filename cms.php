@@ -246,7 +246,7 @@ function beforeSectionSet() {
 	$pieces = [];
 	foreach ($items as $item) {
 		$obj = getEnrichedPieceObj($item, $sheet);
-		//if ($piece && $node != 'all' && $node != $obj['Type']) continue;
+		if ($isPseudo && $node != 'all' && $node != $obj['Type']) continue;
 		$pieces[] = $obj;
 	}
 

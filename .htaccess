@@ -4,7 +4,7 @@
 
 <IfModule mod_rewrite.c>
 RewriteCond $1 !^(index\.php|assets)
-RewriteCond %{REQUEST_URI} !\.(pdf|mp4|mp3|jpg|png|xml|zip)$
+RewriteCond %{REQUEST_URI} !\.(pdf|mp4|mp3|jpg|png|xml|zip|html)$
 RewriteRule ^(.*)$ index.php/?%{QUERY_STRING}&node=$1 [L]
 </IfModule>
 
