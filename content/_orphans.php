@@ -28,11 +28,12 @@ function __get_delta($sheet, $items) {
 	$taxonomy = getSheet('taxonomy', 'type');
 	$works = $taxonomy->group['work'];
 	$allCollections = arrayGroupBy($sheet->rows, $sheet->columns['Collection']);
+	$typeByWork = arrayGroupBy($sheet->rows, $sheet->columns['Work']);
 	foreach ($works as $workRow) {
 		$work = $taxonomy->getValue($workRow, 'slug');
 		$collections = __getCollections($work, $allCollections, $sheet->columns['Work']);
 		foreach ($collections as $coll) {
-			$wkType = _getWorkType(['Work' => $work]);
+			$wkType = $typeByWork[$work][0][$sheet->columns['Type']];
 			$files = scandir(SITEPATH . '/' . $wkType . '/' . ($wkType == 'prose' ? $work . '/' : '') . $coll);
 			$rb = $wkType . '	' . $work . '	' . $coll . '	';
 			foreach ($files as $f) {

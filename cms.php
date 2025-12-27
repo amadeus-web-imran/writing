@@ -173,7 +173,7 @@ function site_before_render() {
 
 function getEnrichedPieceObj($item, $sheet) {
 	$result = rowToObject($item, $sheet);
-	$result['Type'] = $type = _getWorkType($result);
+	$type = $result['Type'];
 	$result['File'] = concatSlugs([variable('path'), $type . ($type == 'prose' ? '/' . urlize($result['Work']) : ''),
 		$sheet->getValue($item, 'Collection'),
 		urlize($sheet->getValue($item, 'Name')) . '.txt',
@@ -181,23 +181,18 @@ function getEnrichedPieceObj($item, $sheet) {
 	return $result;
 }
 
-function _getWorkType($item) {
-	//TODO: high work type from a collate of 3 menu items
-	$prose = ['daivic', 'essays', 'reviews', 'touched-by-grace'];
-	return in_array($item['Work'], $prose) ? 'prose' : 'poems';
-}
-
 //1 - piece checking happens here
 function beforeSectionSet() {
 	$node = variable('node');
 
 	$tax = variable(TAXONOMY);
+	$isHelper = startsWith($node, '_');
 	$isPseudo = in_array($node, ['all', 'poems', 'prose']);
 	$isTax = in_array($node, array_keys($tax));
 
 	$byWork = getSheet('sitemap', 'Work');
 
-	if (!$isPseudo && !$isTax) {
+	if (!$isPseudo && !$isTax && !$isHelper) {
 		$sheet = getSheet('sitemap', 'Name', true);
 
 		if (!isset($sheet->group[$node]))
@@ -230,7 +225,7 @@ function beforeSectionSet() {
 		$sheet = $byWork;
 	else if (array_key_exists($node, $tax))
 		$sheet = getSheet('sitemap', $tax[$node], true);
-	else if ($isPseudo)
+	else if ($isPseudo || $isHelper)
 		$sheet = getSheet('sitemap', false);
 
 	$on = getPageParameterAt(1);
@@ -242,10 +237,11 @@ function beforeSectionSet() {
 			variable('skip-content-render', true);
 	}
 
-	$items = $isPseudo ? $sheet->rows : $sheet->group[$on];
+	$items = $isPseudo || $isHelper ? $sheet->rows : $sheet->group[$on];
 	$pieces = [];
 	foreach ($items as $item) {
 		$obj = getEnrichedPieceObj($item, $sheet);
+		if ($isHelper) continue;
 		if ($isPseudo && $node != 'all' && $node != $obj['Type']) continue;
 		$pieces[] = $obj;
 	}
