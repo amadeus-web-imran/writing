@@ -13,6 +13,8 @@ variable(TAXONOMY, [
 
 function renderMetaPage($slug) {
 	$name = getQueryParameter('name');
+	$headings = getQueryParameter('headings');
+	$wantsImg = in_array($slug, ['works', 'collections']);
 
 	echo '<hr class="m-2" />';
 	$suffix = $name ? ' &mdash;> ' . humanize($name) : '';
@@ -28,19 +30,25 @@ function renderMetaPage($slug) {
 	variable('sheet', $sheet);
 
 	$op = [];
+	$imgStart = '<div class="text-center after-content p-3 rounded-3"><img class="img-fluid img-max-400" src="'; $imgEnd = '" /></div>' . NEWLINE;
 
-	if ($name) echo getLink(' == ALL == ', pageUrl($slug), 'btn btn-primary');
+	if ($name || $headings) echo getLink(' == ALL == ', pageUrl($slug), 'btn btn-primary my-3');
+	if (!$headings) echo getLink(' == ONLY HEADINGS == ', pageUrl($slug) . '?headings=1', 'btn btn-success my-3');
 
 	foreach ($sheet->group as $key => $rows) {
 		$text = humanize($key);
 		$url = urlize($key);
 
 		if ($name && $name != $url) continue;
+
 		$count = '<span class="float-right">Count: ' . count($rows) . '</span>';
 		$title = getLink($count . $text, pageUrl($slug . '/' . $url));
 		$onlyMe = getLink('**', pageUrl($slug . '/?name=' . $url), 'btn btn-outline-info');
-		$res = h2($title . ' &mdash; ' . $onlyMe, '', true);
-		$res .= NEWLINE . implode(NEWLINE, array_map(function($piece) { 
+		$img = $wantsImg && disk_file_exists(SITEPATH . '/assets/cdn/' . 
+			($jpg = 'taxonomy/' . $slug . '-' . $url . '.jpg')) ? $imgStart . getHtmlVariable('cdn') . $jpg . $imgEnd : '';
+		$res = $img . h2($title . ' &mdash; ' . $onlyMe, '', true);
+
+		if (!$headings) $res .= NEWLINE . implode(NEWLINE, array_map(function($piece) {
 			$sheet = variable('sheet');
 			return getLink($sheet->getValue($piece, 'SNo') . ' ' . $sheet->getValue($piece, 'Name'),
 				$link = pageUrl(urlize($sheet->getValue($piece, 'Name'))), 'btn btn-outline-info m-2 ms-0')
@@ -162,10 +170,10 @@ function site_before_render() {
 
 	DEFINE('NODEPATH', SITEPATH . '/' . variable('section') . '/' . $node);
 	variables([
-		'nodeSiteName' => humanize($node),
-		'nodeSafeName' => $node,
-		'submenu-at-node' => true,
-		'nodes-have-files' => true,
+		VARNodeSiteName => humanize($node),
+		VARNodeSafeName => $node,
+		VARSubmenuAtNode => true,
+		VARNodesHaveFiles => true,
 	]);
 }
 

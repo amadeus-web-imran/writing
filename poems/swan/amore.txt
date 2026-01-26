@@ -1,7 +1,5 @@
-<div class="video-container"><iframe width="560" height="315" src="https://www.youtube.com/embed/cv5V5-wkme4?si=lkDRo4lOvaarlbg7" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
-
-<a href="https://www.davidpbrown.co.uk/poetry/william-henry-davies.html" target="_blank">What is this life so fraught with care,
-We have not the time to stand and stare,</a>
+What is this life so fraught with care,
+We have not the time to stand and stare,
 
 Our heads so filled with worry & troubles
 We wish only to look at how other people seem to enjoy our suffering
