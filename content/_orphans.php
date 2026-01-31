@@ -1,10 +1,10 @@
 <?php
 contentBox('orphans', 'container p-3 after-content');
-$sheet = getSheet('sitemap', false);
+$sheet = sitemapTsv::read(false);
 $pieces = [];
 foreach ($sheet->rows as $item) {
 	$n = urlize($sheet->getValue($item, 'Name'));
-	$pieces[$n] = getEnrichedPieceObj($item, $sheet);
+	$pieces[$n] = $sheet->enrichedPiece($item);
 }
 
 $delta = __get_delta($sheet, $pieces);

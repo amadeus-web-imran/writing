@@ -12,11 +12,11 @@ variable(TAXONOMY, [
 ]);
 
 function renderMetaPage($slug) {
-	$name = getQueryParameter('name');
-	$headings = getQueryParameter('headings');
+	$name = getQueryParameter(VARQueryName);
+	$headings = getQueryParameter(VARQueryHeadings);
 	$wantsImg = in_array($slug, ['works', 'collections']);
 
-	echo '<hr class="m-2" />';
+	echo tagUX::selfClosetag(tagUX::HorizontalRule, cssUX::m2);
 	$suffix = $name ? ' &mdash;> ' . humanize($name) : '';
 	printSpacer(humanize(variable(NODEVAR)) . $suffix);
 
@@ -26,7 +26,7 @@ function renderMetaPage($slug) {
 	if (!isset($tax[$slug])) showDebugging('cms.php', 'TAXONOMY for ' . $slug . ' not defined', true);
 	$groupBy = $tax[$slug];
 
-	$sheet = getSheet('sitemap', $groupBy);
+	$sheet = sitemapTsv::read($groupBy);
 	variable('sheet', $sheet);
 
 	$op = [];
@@ -53,7 +53,7 @@ function renderMetaPage($slug) {
 			return getLink($sheet->getValue($piece, 'SNo') . ' ' . $sheet->getValue($piece, 'Name'),
 				$link = pageUrl(urlize($sheet->getValue($piece, 'Name'))), 'btn btn-outline-info m-2 ms-0')
 				. ' ' . getLinkWithCustomAttr('**', $link . '?content=1', ' data-lightbox="iframe" class="btn btn-outline-info"')
-				. ' ' . $sheet->getValue($piece, 'Description') . BRTAG;
+				. ' ' . $sheet->getDescription($piece) . BRTAG;
 		}, $rows));
 
 		$res .= cbCloseAndOpen('container');
@@ -96,7 +96,7 @@ function after_file() {
 	if (variable('hasPiece')) {
 		$current = variable('currentPiece');
 
-		$onlyMain = hasPageParameter('content');
+		$onlyMain = getQueryParameter(VARQueryContent);
 		if (!$onlyMain && $item = variable('nextPiece'))
 			printPiece($item, 'after', false, 'Next');
 		if (!$onlyMain && $item = variable('previousPiece'))
@@ -104,11 +104,11 @@ function after_file() {
 
 		$md = str_replace('.txt', '.md', $current['File']);
 		if (disk_file_exists($md)) {
-			contentBox('', 'container standout');
+			contentBoxClasses('deep-dive', cssUX::container, cssUX::standout);
 			printH1InDivider('Deep Dive with Copilot');
-			variable('no-content-boxes', true);
-			builtinOrRender($md, 'engage');
-			clearVariable('no-content-boxes');
+			variable(VARNoContentBoxes, true);
+			builtinOrRender($md, features::engage);
+			clearVariable(VARNoContentBoxes);
 			contentBox('end');
 		}
 	}
@@ -158,17 +158,17 @@ function _getTaxonomyText($val, $type) {
 
 //sets inner node for more/with-ai/
 function site_before_render() {
-	if (hasPageParameter('content')) {
-		add_body_class('pt-4');
-		variable('sub-theme', 'content-only');
+	if (getQueryParameter(VARQueryContent)) {
+		add_body_class(cssUX::pt4);
+		setSubTheme(VARSubthemeContentOnly);
 	}
 
-	$section = variable('section');
-	$node = variable('node');
+	$section = variable(SECTIONVAR);
+	$node = variable(NODEVAR);
 
 	if (true || $section == $node) return;
 
-	DEFINE('NODEPATH', SITEPATH . '/' . variable('section') . '/' . $node);
+	DEFINE('NODEPATH', SITEPATH . '/' . variable(SECTIONVAR) . '/' . $node);
 	variables([
 		VARNodeSiteName => humanize($node),
 		VARNodeSafeName => $node,
@@ -179,43 +179,69 @@ function site_before_render() {
 
 //================================================
 
-function getEnrichedPieceObj($item, $sheet) {
-	$result = rowToObject($item, $sheet);
-	$type = $result['Type'];
-	$result['File'] = concatSlugs([variable('path'), $type . ($type == 'prose' ? '/' . urlize($result['Work']) : ''),
-		$sheet->getValue($item, 'Collection'),
-		urlize($sheet->getValue($item, 'Name')) . '.txt',
-	]);
-	return $result;
+class sitemapTsv extends sheet {
+	const expected = 'EXPECTED!!';
+
+	static function read($groupBy, $urlize = false) {
+		return new sitemapTsv('sitemap', $groupBy, $urlize);
+	}
+
+	function enrichedPiece($item) {
+		$result = $this->asObject($item);
+		$type = $result['Type'];
+		$workFol = $type == 'prose' ? '/' . $this->getWork($item, true) : '';
+		$result['File'] = concatArgsWithSlash(
+			SITEPATH, $type . $workFol,
+			$this->getCollection($item),
+			$this->getName($item, true) . '.txt',
+		);
+		return $result;
+	}
+
+	function getWork($item, $urlize = false) {
+		return $this->getValue($item, 'Work', self::expected, $urlize);
+	}
+
+	function getCollection($item) {
+		return $this->getValue($item, 'Collection');
+	}
+
+	function getName($item, $urlize = false) {
+		return $this->getValue($item, 'Name', self::expected, $urlize);
+	}
+
+	function getDescription($item) {
+		return $this->getValue($item, 'Description');
+	}
 }
 
 //1 - piece checking happens here
 function beforeSectionSet() {
-	$node = variable('node');
+	$node = variable(VARNode);
 
 	$tax = variable(TAXONOMY);
 	$isHelper = startsWith($node, '_');
 	$isPseudo = in_array($node, ['all', 'poems', 'prose']);
 	$isTax = in_array($node, array_keys($tax));
 
-	$byWork = getSheet('sitemap', 'Work');
+	$byWork = sitemapTsv::read('Work');
 
 	if (!$isPseudo && !$isTax && !$isHelper) {
-		$sheet = getSheet('sitemap', 'Name', true);
+		$sheet = sitemapTsv::read('Name', true);
 
 		if (!isset($sheet->group[$node]))
 			return false;
 
 		$item = $sheet->group[$node][0];
 
-		$ofSameWork = $byWork->group[$sheet->getValue($item, 'Work')];
+		$ofSameWork = $byWork->group[$sheet->getWork($item)];
 		$indicesByName = [];
-		foreach ($ofSameWork as $ix => $row) $indicesByName[$byWork->getValue($row, 'Name')] = $ix;
+		foreach ($ofSameWork as $ix => $row) $indicesByName[$byWork->getName($row)] = $ix;
 
-		$currentIndex = $indicesByName[$sheet->getValue($item, 'Name')];
-		$current = getEnrichedPieceObj($item, $sheet);
-		$previous = $currentIndex > 0 ? getEnrichedPieceObj($ofSameWork[$currentIndex - 1], $sheet) : false;
-		$next = $currentIndex < count($ofSameWork) -1 ? getEnrichedPieceObj($ofSameWork[$currentIndex + 1], $sheet) : false;
+		$currentIndex = $indicesByName[$sheet->getName($item)];
+		$current = $sheet->enrichedPiece($item);
+		$previous = $currentIndex > 0 ? $sheet->enrichedPiece($ofSameWork[$currentIndex - 1]) : false;
+		$next = $currentIndex < count($ofSameWork) -1 ? $sheet->enrichedPiece($ofSameWork[$currentIndex + 1]) : false;
 
 		variables([
 			'file' => $current['File'],
@@ -232,9 +258,9 @@ function beforeSectionSet() {
 	if ($node == 'works')
 		$sheet = $byWork;
 	else if (array_key_exists($node, $tax))
-		$sheet = getSheet('sitemap', $tax[$node], true);
+		$sheet = sitemapTsv::read($tax[$node], true);
 	else if ($isPseudo || $isHelper)
-		$sheet = getSheet('sitemap', false);
+		$sheet = sitemapTsv::read(false);
 
 	$on = getPageParameterAt(1);
 
@@ -248,7 +274,7 @@ function beforeSectionSet() {
 	$items = $isPseudo || $isHelper ? $sheet->rows : $sheet->group[$on];
 	$pieces = [];
 	foreach ($items as $item) {
-		$obj = getEnrichedPieceObj($item, $sheet);
+		$obj = $sheet->enrichedPiece($item);
 		if ($isHelper) continue;
 		if ($isPseudo && $node != 'all' && $node != $obj['Type']) continue;
 		$pieces[] = $obj;
