@@ -18,7 +18,7 @@ function renderMetaPage($slug) {
 
 	echo tagUX::selfClosetag(tagUX::HorizontalRule, cssUX::m2);
 	$suffix = $name ? ' &mdash;> ' . humanize($name) : '';
-	printSpacer(humanize(variable(NODEVAR)) . $suffix);
+	printSpacer(humanizeThis() . $suffix);
 
 	contentBox($slug, 'container');
 
@@ -78,16 +78,16 @@ function printPiece($item, $where, $xofy = false, $relative = '') {
 	if ($xofy) echo '<span style="float: right">' . $xofy . '</span>';
 	h2($heading, 'm-0 p-0');
 
-	echo '<p class="mt-2 mb-3 p-3 content-box after-content">' . $item['Description'] . '</p>';
+	echo BRNL . '<p class="mb-3 p-3 content-box after-content">' . $item['Description'] . '</p>';
 
-	echo '<div class="large-list with-labels"><ul class="p-0"><li>' . NEWLINE . implode('</li>' . NEWLINE . '	<li>', [
+	echo '<div class="large-list with-labels"><ul class="p-0 mb-0"><li>' . NEWLINE . implode('</li>' . NEWLINE . '	<li>', [
 		'<label>Date: </label> '       . $item['Date'],
 		'<label>Category: </label> '   . getLink(_getTaxonomyText($item['Category'], 'category'), urlFromSlugs('categories', $item['Category'])),
 		'<label>Dedication: </label> ' . getLink($item['Dedication'], urlFromSlugs('for', $item['Dedication'])),
 		'<label>Collection: </label> ' . getLink(_getTaxonomyText($item['Collection'], 'collection'), urlFromSlugs('collections', $item['Collection'])),
 		'<label>Work: </label> ' . getLink(_getTaxonomyText($item['Work'], 'work'), urlFromSlugs('works', $item['Work'])),
 		'<label>Rhymes: </label> ' . $item['RhymeScheme'],
-	]) . NEWLINE . '</li></div>' . NEWLINE;
+	]) . NEWLINE . '</li></div>' . BRNL;
 
 	//TODO: if matching image / meta
 
@@ -124,7 +124,7 @@ function site_before_render() {
 
 	DEFINE('NODEPATH', SITEPATH . '/' . variable(SECTIONVAR) . '/' . $node);
 	variables([
-		VARNodeSiteName => humanize($node),
+		VARNodeSiteName => humanizeThis(),
 		VARNodeSafeName => $node,
 		VARSubmenuAtNode => true,
 		VARNodesHaveFiles => true,

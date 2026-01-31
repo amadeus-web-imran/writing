@@ -10,12 +10,13 @@ function did_site_render_page() {
 
 function before_file() {
 	if (variable('hasPiece')) {
+		printSpacer(humanizeThis());
 		printPiece(variable('currentPiece'), 'before');
 	} else if (variable('hasPieces')) {
 		echo '<hr class="m-2" />';
 		$pp1 = getPageParameterAt();
 		$suffix = $pp1 ? ' &mdash;> ' . humanize($pp1) : '';
-		printSpacer(humanize(variable(NODEVAR)) . $suffix);
+		printSpacer(humanizeThis() . $suffix);
 
 		$count = count(variable('currentPieces'));
 		foreach (variable('currentPieces') as $ix => $item)
